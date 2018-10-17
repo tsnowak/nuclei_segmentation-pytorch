@@ -104,7 +104,3 @@ Pursuing `2` because most tenable in short period.
   accuracy, what is clear is that more significant modifications such as hard
   negative mining and additional loss factors are necessary to get any real
   change in accuracy.
-
-## TODO
-* store anaconda environment in file
-* create and upload git repository (figure out where)
