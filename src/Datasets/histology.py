@@ -27,6 +27,33 @@ class NormalizeInverse(transforms.Normalize):
     def __call__(self, tensor):
         return super(NormalizeInverse, self).__call__(tensor.clone())
 
+class ToOneHot(object):
+
+    def __init__(self, dim=0):
+        self.dim = dim
+
+    def __call__(self, labels, n_class):
+
+        labels = labels.type(torch.LongTensor)
+        _, h, w = labels.size()
+        onehot = torch.zeros(n_class, h, w)
+        target = onehot.scatter_( self.dim, labels.data, torch.ones(n_class, h, w) )
+
+        return target
+
+class FromOneHot(object):
+
+    def __init__(self, dim=0):
+        self.dim = dim
+
+    def __call__(self, onehot):
+
+        onehot = onehot.type(torch.FloatTensor)
+        c, h, w = onehot.shape
+        target = onehot.argmax(dim=self.dim).reshape(1, h, w).float()
+
+        return target
+
 class CellHistology(Dataset):
 
     def __init__(self, mode, root_dir):
@@ -61,6 +88,7 @@ class CellHistology(Dataset):
                                               tuple(self.std.T[0]))
         self.normalizeInverse = NormalizeInverse(tuple(self.mean.T[0]),
                                                  tuple(self.std.T[0]))
+        self.toOneHot = ToOneHot()
 
     def __len__(self):
         return len(self.data)
@@ -91,29 +119,15 @@ class CellHistology(Dataset):
         else:
             vflip = transforms.RandomVerticalFlip(p=0.0)
 
-        # remove rotation for now because didn't help
-        #if self.mode == 'train':
-        #    #angle = random.randint(0, 360)
-        #    angle = 0
-        #else:
-        #    angle = 0
-
         image = hflip(image)                     # apply hflip operation
         image = vflip(image)                     # apply hflip operation
-        #image = transforms.functional.rotate(image,
-        #                                     angle=angle,
-        #                                     resample=Image.BILINEAR
-        #                                     ) # random roation
         image_t = self.toTensor(image)          # convert to tensor
         image_t = self.normalize(image_t)       # mean center, and normalize
 
         label = hflip(label)                     # apply hflip operation
         label = vflip(label)                     # apply hflip operation
-        #label = transforms.functional.rotate(label,
-        #                                     angle=angle,
-        #                                     resample=Image.BILINEAR
-        #                                     ) # random roation
         label_t = self.toTensor(label)          # convert to tensor
+        label_t = self.toOneHot(label_t, 2)
         # NOTE: no need to one hot because 2 classes and using BCELogits
 
         data = {'X': image_t, 'Y': label_t}
@@ -220,6 +234,9 @@ class CellHistology(Dataset):
 
 
     def visualize(self, image, label, prediction=None):
+
+        fromOneHot = FromOneHot()
+        label = fromOneHot(label)
 
         image = self.toPILImage(self.normalizeInverse(image))
         label = self.toPILImage(label)

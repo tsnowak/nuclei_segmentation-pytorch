@@ -34,7 +34,7 @@ config = '{: <25} {: <25}\n'.format('Epochs: ', epochs) + \
          '{: <25} {: <25}\n'.format('Weight Decay: ', weight_decay)
 
 
-model = UNet(3, 1).to(device)
+model = UNet(3, 2).to(device)
 
 Train = CellHistology('train', '/home/tsnowak/Software/Interview-Prep/EchonousProblem/data')
 Val = CellHistology('val', '/home/tsnowak/Software/Interview-Prep/EchonousProblem/data')

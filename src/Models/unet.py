@@ -120,7 +120,7 @@ if __name__ == "__main__":
 
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
-    n_class = 1
+    n_class = 2
     input = torch.randn((1, 3, 512, 512)).to(device)
     b,c,h,w = input.shape
 
